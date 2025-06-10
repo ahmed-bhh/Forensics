@@ -1,62 +1,87 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <ctype.h>
+#include <string.h>
 
-#define PAGE_SIZE 256
-#define MAX_FILENAME_LEN 64
+#define MIN_LEN 3
 
-int is_filename(const unsigned char *buf, int i) {
-    return buf[i] == '/' &&
-           isprint(buf[i+1]) &&
-           (strstr((char *)&buf[i], ".txt") || strstr((char *)&buf[i], ".json") || strstr((char *)&buf[i], ".py"));
+void print_directory(const char *path) {
+    if (path[0] != '/') return;
+    const char *slash = strrchr(path, '/');
+    if (slash && slash != path) {
+        char dir[256];
+        size_t len = slash - path + 1;
+        strncpy(dir, path, len);
+        dir[len] = 0;
+        printf("  Directory : %s\n", dir);
+    } else {
+        printf("  Directory : /\n");
+    }
 }
 
-int is_deleted(const unsigned char *buf) {
-    for (int i = 0; i < 16; i++) {
-        if (buf[i] != 0x00 && buf[i] != 0xFF) return 0;
-    }
-    return 1;
+void print_separator() {
+    printf("------------------------------------------------------------\n");
 }
 
 int main(int argc, char *argv[]) {
-    if (argc < 2) {
+    if (argc != 2) {
         printf("Usage: %s <spiffs.img>\n", argv[0]);
         return 1;
     }
 
-    FILE *f = fopen(argv[1], "rb");
-    if (!f) {
-        perror("Failed to open image");
+    FILE *fp = fopen(argv[1], "rb");
+    if (!fp) {
+        perror("fopen");
         return 1;
     }
 
-    unsigned char page[PAGE_SIZE];
-    long offset = 0;
-    int total = 0;
+    int c, len = 0;
+    char buf[4096];
+    long pos = 0, start = 0;
+    int in_string = 0;
 
-    printf("🔍 Scanning SPIFFS image: %s\n\n", argv[1]);
+    printf("==== SPIFFS IMAGE STRING/FILE SCAN REPORT ====\n\n");
 
-    while (fread(page, 1, PAGE_SIZE, f) == PAGE_SIZE) {
-        for (int i = 0; i < PAGE_SIZE - MAX_FILENAME_LEN; i++) {
-            if (is_filename(page, i)) {
-                total++;
-                printf("📄 File:      %s\n", &page[i]);
-                printf("📍 Offset:    0x%06lx\n", offset + i);
-                printf("🗂️  Status:    %s\n", is_deleted(page) ? "❌ Deleted (likely)" : "✅ Active");
-                printf("----------------------------------------\n");
-                break; // one per page max
+    while ((c = fgetc(fp)) != EOF) {
+        if (isprint(c)) {
+            if (!in_string) {
+                start = pos;
+                in_string = 1;
             }
+            buf[len++] = c;
+            if (len >= sizeof(buf) - 1) len = sizeof(buf) - 2;
+        } else {
+            if (in_string && len >= MIN_LEN) {
+                buf[len] = 0;
+                if (buf[0] == '/') {
+                    print_directory(buf);
+                    printf("  File      : %s\n", buf);
+                    printf("  Offset    : 0x%06lx\n", start);
+                } else {
+                    printf("  String    : \"%s\"\n", buf);
+                    printf("  Offset    : 0x%06lx\n", start);
+                }
+                print_separator();
+            }
+            len = 0;
+            in_string = 0;
         }
-        offset += PAGE_SIZE;
+        pos++;
     }
 
-    if (total == 0) {
-        printf("❌ No file names found in image.\n");
-    } else {
-        printf("🔎 Summary: %d entries (some may be deleted)\n", total);
+    if (in_string && len >= MIN_LEN) {
+        buf[len] = 0;
+        if (buf[0] == '/') {
+            print_directory(buf);
+            printf("  File      : %s\n", buf);
+            printf("  Offset    : 0x%06lx\n", start);
+        } else {
+            printf("  String    : \"%s\"\n", buf);
+            printf("  Offset    : 0x%06lx\n", start);
+        }
+        print_separator();
     }
 
-    fclose(f);
+    printf("\n============= END OF REPORT =============\n");
+    fclose(fp);
     return 0;
 }

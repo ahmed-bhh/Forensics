@@ -18,3 +18,24 @@ SPIFFS uses a **log-structured design**, which appends changes instead of modify
 
 When a file is deleted in SPIFFS, the system marks the corresponding **object headers** and **index pages** as deleted. However, the actual data remains in the memory until the corresponding flash pages are reclaimed and reused. These blocks are not immediately erased due to the constraints of NOR flash memory (which requires whole-block erasure). As a result, deleted file data can often be found and analyzed in the raw filesystem image before it gets overwritten — providing an opportunity for **forensic recovery**.
 
+# SPIFFS Forensic Reader
+
+A simple forensic tool that reads a SPIFFS (SPI Flash File System) image and displays:
+
+- **Directories** inferred from file paths  
+- **Files** and their offsets  
+- **Printable content** found in each file  
+- **Generic strings** and log fragments  
+- _Work in progress:_ detection and recovery of deleted file remnants  
+
+## Quick Start
+
+1. **Build the tool**  
+   ```bash
+   make
+ **run the scanner**  
+./spiffs_reader my_spiffs.img
+
+2. **results**
+ ![alt text](image.png)
+

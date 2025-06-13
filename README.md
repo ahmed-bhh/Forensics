@@ -39,3 +39,49 @@ A simple forensic tool that reads a SPIFFS (SPI Flash File System) image and dis
 2. **results**
  ![alt text](image.png)
 
+## Challenges and Future Improvements
+
+### Difficulties Encountered
+
+1. **Simulating Deleted Files**  
+   - PlatformIO’s `buildfs` command always creates a fresh image based on the current `data/` folder.  
+   - Deleted files simply do not appear in new images, making it impossible to test deletion recovery without dumping a live flash or manually editing the binary.
+
+2. **Identical `object_id` Values**  
+   - In simple test images, multiple files share the same SPIFFS `object_id`, preventing reliable association of data pages to individual files.  
+   - This leads to mixed or duplicated content when reconstructing file bodies.
+
+3. **Lack of Native Directory Structure**  
+   - SPIFFS does not maintain real directories—paths are part of file names only.  
+   - Inferring folder hierarchies requires string parsing rather than reading a dedicated index.
+
+4. **Heuristic String Carving**  
+   - Relying on printable‐string scanning can pick up log fragments, metadata, or false positives.  
+   - Balancing noise vs. comprehensiveness (minimum string length) required trial and error.
+
+---
+
+### Possible Improvements
+
+1. **Full SPIFFS Metadata Parsing**  
+   - Implement or integrate a parser for SPIFFS object lookup tables, erase blocks, and page spans.  
+   - This would allow accurate recovery of file content even when `object_id`s collide.
+
+2. **Automated Deleted-File Simulation**  
+   - Develop a small ESP32/ESP8266 Arduino sketch that writes files, deletes one, then dumps the flash over serial.  
+   - This produces realistic test images without manual hex edits.
+
+4. **Export Formats**  
+   - Add CSV or JSON output modes to facilitate integration with other tools or reporting pipelines.  
+   - Optionally generate a visual HTML report with clickable file entries.
+
+5. **Directory Tree Reconstruction**  
+   - Group detected file paths into a tree structure in memory, then print a hierarchical view (like `tree`).  
+   - This would help users understand folder layouts at a glance.
+
+6. **Error Handling and Logging**  
+   - Improve resilience against malformed or truncated images by adding sanity checks and verbose logging.  
+   - Provide clear messages when recovery of deleted files is not possible.
+
+
+

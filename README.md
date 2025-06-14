@@ -20,7 +20,7 @@ When a file is deleted in SPIFFS, the system marks the corresponding **object he
 
 # SPIFFS Forensic Reader
 
-A simple forensic tool that reads a SPIFFS (SPI Flash File System) image and displays:
+A forensic tool that reads a SPIFFS (SPI Flash File System) image and displays:
 
 - **Directories** inferred from file paths  
 - **Files** and their offsets  

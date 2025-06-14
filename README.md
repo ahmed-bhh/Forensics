@@ -32,6 +32,8 @@ A simple forensic tool that reads a SPIFFS (SPI Flash File System) image and dis
 
 1. **Build the tool**  
    ```bash
+   git clone https://github.com/ahmed-bhh/Forensics.git
+   cd Forensics
    make
  **run the scanner**  
 ./spiffs_reader my_spiffs.img

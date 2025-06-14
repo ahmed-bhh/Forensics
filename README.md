@@ -35,12 +35,11 @@ A forensic tool that reads a SPIFFS (SPI Flash File System) image and displays:
    git clone https://github.com/ahmed-bhh/Forensics.git
    cd Forensics
    make
- **run the scanner**  
+ 2. **run the scanner**
     ```bash
+    ./spiffs_reader my_spiffs.img
 
-./spiffs_reader my_spiffs.img
-
-2. **results**
+4. **results**
  ![alt text](image.png)
 
 ## Challenges and Future Improvements
